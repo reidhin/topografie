@@ -15,6 +15,10 @@
 #'
 run_app <- function(filename="europe.rds", ...) {
 
+  # find the www map
+  www <- system.file("dashboard", "www", package="topografie")
+  addResourcePath("www", system.file(file.path("dashboard", "www"), package="topografie"))
+
   # load the map
   data_folder <- system.file("dashboard", "data", package="topografie")
   df <- readRDS(file.path(data_folder, filename))
@@ -30,6 +34,11 @@ run_app <- function(filename="europe.rds", ...) {
     # we are using shinyjs
     shinyjs::useShinyjs(),
 
+    # visitor tracker
+    tags$head(tags$title("Topografie voor Kandinsky College")),
+    tags$head(tags$link(rel="shortcut icon", href="www/favicon.ico")),
+    # include visitor tracker
+    tags$head(includeHTML(file.path(www, "geitjes-analytics.html"))),
 
     sidebarLayout(
 
