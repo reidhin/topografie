@@ -28,7 +28,7 @@ Indien je de app lokaal wilt draaien op je eigen computer, dan kun je dit pakket
 
 ``` r
 require("devtools")
-devtools::install_github(")
+devtools::install_github("reidhin/topografie")
 ```
 
 ## Voorbeeld

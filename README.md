@@ -20,7 +20,7 @@ dit pakket installeren als:
 
 ``` r
 require("devtools")
-devtools::install_github(")
+devtools::install_github("reidhin/topografie")
 ```
 
 ## Voorbeeld
