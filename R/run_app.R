@@ -31,21 +31,26 @@ run_app <- function(filename="europe.rds", ...) {
 
   ui <- fluidPage(
 
+    # generic metadata
+    tags$head(tags$title("Topografie voor Kandinsky College")),
+    tags$head(tags$link(rel="shortcut icon", href="www/favicon.ico")),
+
+    # include visitor tracker
+    tags$head(includeHTML(file.path(www, "geitjes-analytics.html"))),
+
     # we are using shinyjs
     shinyjs::useShinyjs(),
 
-    # visitor tracker
-    tags$head(tags$title("Topografie voor Kandinsky College")),
-    tags$head(tags$link(rel="shortcut icon", href="www/favicon.ico")),
-    # include visitor tracker
-    tags$head(includeHTML(file.path(www, "geitjes-analytics.html"))),
+    # include style file
+    includeCSS(file.path(www, "reidhin_style.css")),
+    includeScript(file.path(www, "height.js")),
 
     sidebarLayout(
 
       # show the interaction in the sidebar
       sidebarPanel(
         width=3,
-        style = "height: 100vh; display: flex; flex-flow: column; overflow: auto; margin-bottom: 0;",
+        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100); display: flex; flex-flow: column; margin-bottom: 0;",
 
         # Application title
         h2(
@@ -99,7 +104,8 @@ run_app <- function(filename="europe.rds", ...) {
 
       # show the map on the main panel
       mainPanel(
-        leaflet::leafletOutput("map_euro", width="100%", height="100vh"),
+        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100);",
+        leaflet::leafletOutput("map_euro", width="100%", height="100%"),
         width=9
       )
     )
@@ -107,6 +113,8 @@ run_app <- function(filename="europe.rds", ...) {
 
   server <- function(input, output, session) {
 
+    # set seed
+    set.seed(as.integer(Sys.time()))
 
     # which topo-item is selected
     selected <- reactiveVal(sample(1:length(topo.names), 1))
