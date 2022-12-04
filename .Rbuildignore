@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^app\.R$
+^data-raw$
+^README\.Rmd$
+^LICENSE\.md$
+^rsconnect/
