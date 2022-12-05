@@ -35,9 +35,6 @@ run_app <- function(filename="europe.rds", ...) {
     tags$head(tags$title("Topografie voor Kandinsky College")),
     tags$head(tags$link(rel="shortcut icon", href="www/favicon.ico")),
 
-    # include visitor tracker
-    tags$head(includeHTML(file.path(www, "geitjes-analytics.html"))),
-
     # we are using shinyjs
     shinyjs::useShinyjs(),
 
@@ -216,10 +213,12 @@ run_app <- function(filename="europe.rds", ...) {
     output$map_euro <- leaflet::renderLeaflet({
       map <- leaflet::leaflet(df %>% dplyr::filter(.data$type=="country")) %>%
         leaflet::addProviderTiles("Esri.WorldTerrain") %>%
+        # leaflet::addProviderTiles("Esri.WorldPhysical") %>%
         leaflet::fitBounds(-5, 40, 15, 70) %>%
         leaflet::addPolygons(
           color = "grey",
           weight = 1,
+          # opacity = 1,
           fillColor = "lightblue"
         ) %>%
         leaflet::addCircles(
@@ -320,7 +319,14 @@ run_app <- function(filename="europe.rds", ...) {
       }
 
       # fly to appropriate point
-      center.coordinates <- sf::st_coordinates(sf::st_centroid(df.sel$geometry[1]))
+      # some polygons are invalid, therefore the when an error is encountered
+      # the mean of all the coordinates is taken as poor-mans centroid
+      center.coordinates <- tryCatch(
+        expr = sf::st_coordinates(sf::st_centroid(df.sel$geometry[1])),
+        error = function(e) as.vector(colMeans(sf::st_coordinates(df.sel$geometry[1])))
+      )
+      # center.coordinates <- sf::st_coordinates(sf::st_centroid(df.sel$geometry[1]))
+      # print(center.coordinates)
       leaflet::leafletProxy("map_euro") %>%
         leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=4)
 
