@@ -33,7 +33,7 @@ run_app <- function(filename="europe.rds", ...) {
 
     # generic metadata
     tags$head(tags$title("Topografie voor Kandinsky College")),
-    tags$head(tags$link(rel="shortcut icon", href="www/favicon.ico")),
+    tags$head(tags$link(rel="shortcut icon", href="www/favicon.png")),
 
     # we are using shinyjs
     shinyjs::useShinyjs(),
