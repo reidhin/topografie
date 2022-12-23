@@ -13,26 +13,22 @@
 #'
 #' @export
 #'
-run_app <- function(filename="europe.rds", ...) {
+run_app <- function(filename="default.rds", ...) {
+
+  # data folder with the topography datasets
+  data_folder <- system.file("dashboard", "data", package="topografie")
+
+  # load dataset options
+  datasets <- readRDS(file.path(data_folder, "contents.rds"))
 
   # find the www map
   www <- system.file("dashboard", "www", package="topografie")
   addResourcePath("www", system.file(file.path("dashboard", "www"), package="topografie"))
 
-  # load the map
-  data_folder <- system.file("dashboard", "data", package="topografie")
-  df <- readRDS(file.path(data_folder, filename))
-
-  # add an index
-  df$index = 1:nrow(df)
-
-  # all names
-  topo.names <- df$naam
-
   ui <- fluidPage(
 
     # generic metadata
-    tags$head(tags$title("Topografie voor Kandinsky College")),
+    tags$head(tags$title("Topografie")),
     tags$head(tags$link(rel="shortcut icon", href="www/favicon.png")),
 
     # we are using shinyjs
@@ -42,70 +38,8 @@ run_app <- function(filename="europe.rds", ...) {
     includeCSS(file.path(www, "reidhin_style.css")),
     includeScript(file.path(www, "height.js")),
 
-    sidebarLayout(
-
-      # show the interaction in the sidebar
-      sidebarPanel(
-        width=3,
-        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100); display: flex; flex-flow: column; margin-bottom: 0;",
-
-        # Application title
-        h2(
-          style = "flex: 0 0 auto; margin-bottom: 24px;",
-          "Topografie Kandinsky"
-        ),
-
-        # drop-down with topo-names
-        div(
-          style = "flex: 0 0 auto;",
-          selectInput(
-            inputId="dropdown_topo_names",
-            label="Selecteer je antwoord",
-            choices=c("Kies"= "", sort(topo.names)),
-          )
-        ),
-
-        div(
-          style = "flex: 1 0 200px;",
-
-          # return correct/wrong
-          div(
-            style = "text-align: center; margin-bottom: 32px; height: 96px;",
-            h2(textOutput("text")),
-            p(textOutput("correct_answer"))
-          ),
-
-          # Go to next item
-          div(
-            id="next_item",
-            style="display: none;",
-            actionButton(
-              inputId="go_to_next",
-              label="Volgende!",
-              style="width: 100%;"
-            )
-          )
-        ),
-
-        div(
-          id = "scores",
-          style = "border-width: 1px; border-style: solid; border-color: grey; border-radius: 4px; padding: 8px; flex: 0 0 auto",
-          htmlOutput("text_statistics")
-        ),
-
-        div(
-          style = "font-size: xx-small; margin-top: 16px; flex: 0 0 auto",
-          "Created by Hans Weda \u00A9"
-        )
-      ),
-
-      # show the map on the main panel
-      mainPanel(
-        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100);",
-        leaflet::leafletOutput("map_euro", width="100%", height="100%"),
-        width=9
-      )
-    )
+    # add the topographic layout
+    topo_ui(datasets)
   )
 
   server <- function(input, output, session) {
@@ -114,7 +48,7 @@ run_app <- function(filename="europe.rds", ...) {
     set.seed(as.integer(Sys.time()))
 
     # which topo-item is selected
-    selected <- reactiveVal(sample(1:length(topo.names), 1))
+    selected <- reactiveVal(NULL)
 
     # whether a choice has been made
     topo_item_chosen <- reactiveVal(NULL)
@@ -122,8 +56,86 @@ run_app <- function(filename="europe.rds", ...) {
     # number correct and wrong
     scores <- reactiveValues(correct=0, wrong=0)
 
-    # all indices to go
-    indices_to_go <- reactiveVal(1:nrow(df))
+    # define all indices to go
+    indices_to_go <- reactiveVal(NULL)
+
+    # topo-filename
+    topo.filename <- reactive({
+      # get the query
+      query <- getQueryString()
+
+      # check if "topo" is in the query
+      if ("topo" %in% names(query)) {
+        # compose the filename
+        temp.filename <- paste0(tolower(query$topo), ".rds")
+        # check if the filename exists in the datasets
+        if (temp.filename %in% datasets$filename) {
+          filename <- temp.filename
+        }
+      }
+
+      filename
+    })
+
+
+    # reactive with data.frame with topo-items
+    df.topo <- reactive({
+      # load the map
+      df <- readRDS(file.path(data_folder, topo.filename()))
+
+      # add an index
+      df$index = 1:nrow(df)
+
+      df
+    })
+
+
+    # update some reactiveVals if needed
+    observe({
+      # set all indices to go
+      indices_to_go(1:nrow(df.topo()))
+
+      # define which one is selected
+      selected(sample(1:length(df.topo()$naam), 1))
+
+      # update answer options
+      updateSelectInput(
+        session,
+        inputId = "dropdown_topo_names",
+        choices=c("Kies"= "", sort(df.topo()$naam)),
+        selected=""
+      )
+
+    })
+
+
+    # set the title in the sidebarPanel
+    output$title <- renderText({
+      paste(
+        "Topografie", datasets$school[datasets$filename == topo.filename()]
+      )
+    })
+
+
+    # show and hide the correct div's depending on the filename
+    observeEvent(topo.filename(), {
+      if (topo.filename() == "default.rds") {
+        shinyjs::hide("div_topo_names")
+        shinyjs::show("div_datasets")
+      } else {
+        shinyjs::show("div_topo_names")
+        shinyjs::hide("div_datasets")
+      }
+    })
+
+
+    # when a dataset is chosen, update the query string
+    observeEvent(input$datasets, ignoreInit = TRUE, {
+      updateQueryString(
+        queryString = sprintf("?topo=%s", gsub(".rds", "", input$datasets)),
+        mode = "push"
+      )
+    })
 
 
     observeEvent(input$go_to_next, {
@@ -154,7 +166,7 @@ run_app <- function(filename="europe.rds", ...) {
           easyClose = TRUE,
           footer = modalButton("Sluiten")
         ))
-        indices_to_go(1:nrow(df))
+        indices_to_go(1:nrow(df.topo()))
       }
       if (length(indices_to_go()) == 1) {
         # last item selected
@@ -175,7 +187,7 @@ run_app <- function(filename="europe.rds", ...) {
         if (input$dropdown_topo_names == "") {
           topo_item_chosen(NULL)
         } else {
-          topo_item_chosen(which(topo.names==input$dropdown_topo_names))
+          topo_item_chosen(which(df.topo()$naam==input$dropdown_topo_names))
         }
       }
     )
@@ -194,7 +206,7 @@ run_app <- function(filename="europe.rds", ...) {
         # fout!
         output$text <- renderText("fout")
         output$correct_answer <- renderText(
-          sprintf("Het goede antwoord was: %s", topo.names[selected()])
+          sprintf("Het goede antwoord was: %s", df.topo()$naam[selected()])
         )
         scores$wrong <- scores$wrong + 1
         shinyjs::show("next_item")
@@ -211,7 +223,7 @@ run_app <- function(filename="europe.rds", ...) {
 
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({
-      map <- leaflet::leaflet(df %>% dplyr::filter(.data$type=="country")) %>%
+      map <- leaflet::leaflet(df.topo() %>% dplyr::filter(.data$type=="country")) %>%
         leaflet::addProviderTiles("Esri.WorldTerrain") %>%
         # leaflet::addProviderTiles("Esri.WorldPhysical") %>%
         leaflet::fitBounds(-5, 40, 15, 70) %>%
@@ -222,12 +234,12 @@ run_app <- function(filename="europe.rds", ...) {
           fillColor = "lightblue"
         ) %>%
         leaflet::addCircles(
-          data = df %>% dplyr::filter(.data$type=="city"),
+          data = df.topo() %>% dplyr::filter(.data$type=="city"),
           color = "darkgrey",
           opacity = 1
         ) %>%
         leaflet::addPolylines(
-          data = df %>% dplyr::filter(.data$type=="river"),
+          data = df.topo() %>% dplyr::filter(.data$type=="river"),
           color = "lightblue",
           opacity = 1,
           weight = 1
@@ -240,7 +252,7 @@ run_app <- function(filename="europe.rds", ...) {
     observe({
 
       # obtain the selected item
-      df.sel <- df %>%
+      df.sel <- df.topo() %>%
         dplyr::filter(.data$index==selected()) %>%
         dplyr::mutate(sf_type = sf::st_geometry_type(.data$geometry))
 
