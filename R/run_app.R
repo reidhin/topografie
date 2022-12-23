@@ -281,8 +281,8 @@ run_app <- function(filename="europe.rds", ...) {
           )
       }
 
-      # area
-      if ("area" %in% df.sel$type) {
+      # area, region, sea
+      if (df.sel$type %in% c("area", "region", "sea")) {
         leaflet::leafletProxy(
           "map_euro",
           data = df.sel %>% dplyr::filter(.data$sf_type=="POINT")
