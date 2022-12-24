@@ -57,7 +57,7 @@ run_app <- function(filename="default.rds", ...) {
     scores <- reactiveValues(correct=0, wrong=0)
 
     # define all indices to go
-    indices_to_go <- reactiveVal(NULL)
+    names_to_go <- reactiveVal(NULL)
 
     # topo-filename
     topo.filename <- reactive({
@@ -81,28 +81,23 @@ run_app <- function(filename="default.rds", ...) {
     # reactive with data.frame with topo-items
     df.topo <- reactive({
       # load the map
-      df <- readRDS(file.path(data_folder, topo.filename()))
-
-      # add an index
-      df$index = 1:nrow(df)
-
-      df
+      readRDS(file.path(data_folder, topo.filename()))
     })
 
 
     # update some reactiveVals if needed
     observe({
       # set all indices to go
-      indices_to_go(1:nrow(df.topo()))
+      names_to_go(unique(df.topo()$naam))
 
       # define which one is selected
-      selected(sample(1:length(df.topo()$naam), 1))
+      selected(sample(unique(df.topo()$naam), 1))
 
       # update answer options
       updateSelectInput(
         session,
         inputId = "dropdown_topo_names",
-        choices=c("Kies"= "", sort(df.topo()$naam)),
+        choices=c("Kies"= "", sort(unique(df.topo()$naam))),
         selected=""
       )
 
@@ -117,7 +112,7 @@ run_app <- function(filename="default.rds", ...) {
     })
 
 
-    # show and hide the correct div's depending on the filename
+    # show and hide the correct div-s depending on the filename
     observeEvent(topo.filename(), {
       if (topo.filename() == "default.rds") {
         shinyjs::hide("div_topo_names")
@@ -151,7 +146,7 @@ run_app <- function(filename="default.rds", ...) {
       output$correct_answer <- renderText("")
 
       # select new item
-      if (length(indices_to_go()) == 0) {
+      if (length(names_to_go()) == 0) {
         # klaar!
         showModal(modalDialog(
           title = "Klaar!",
@@ -166,14 +161,14 @@ run_app <- function(filename="default.rds", ...) {
           easyClose = TRUE,
           footer = modalButton("Sluiten")
         ))
-        indices_to_go(1:nrow(df.topo()))
+        names_to_go(unique(df.topo()$naam))
       }
-      if (length(indices_to_go()) == 1) {
+      if (length(names_to_go()) == 1) {
         # last item selected
-        selected(indices_to_go())
+        selected(names_to_go())
       } else {
         # sample from left over indices
-        selected(sample(indices_to_go(), 1))
+        selected(sample(names_to_go(), 1))
       }
 
     })
@@ -187,7 +182,7 @@ run_app <- function(filename="default.rds", ...) {
         if (input$dropdown_topo_names == "") {
           topo_item_chosen(NULL)
         } else {
-          topo_item_chosen(which(df.topo()$naam==input$dropdown_topo_names))
+          topo_item_chosen(input$dropdown_topo_names)
         }
       }
     )
@@ -199,14 +194,14 @@ run_app <- function(filename="default.rds", ...) {
         # goed!
         output$text <- renderText("goed")
         scores$correct <- scores$correct + 1
-        temp <- indices_to_go()
-        indices_to_go(temp[temp != selected()])
+        temp <- names_to_go()
+        names_to_go(temp[temp != selected()])
         shinyjs::show("next_item")
       } else {
         # fout!
         output$text <- renderText("fout")
         output$correct_answer <- renderText(
-          sprintf("Het goede antwoord was: %s", df.topo()$naam[selected()])
+          sprintf("Het goede antwoord was: %s", selected())
         )
         scores$wrong <- scores$wrong + 1
         shinyjs::show("next_item")
@@ -253,12 +248,12 @@ run_app <- function(filename="default.rds", ...) {
 
       # obtain the selected item
       df.sel <- df.topo() %>%
-        dplyr::filter(.data$index==selected()) %>%
+        dplyr::filter(.data$naam==selected()) %>%
         dplyr::mutate(sf_type = sf::st_geometry_type(.data$geometry))
 
       # remove the previous layer
       leaflet::leafletProxy("map_euro") %>%
-        leaflet::removeShape(layerId = "selected")
+        leaflet::clearGroup(group = "selected")
 
       # city
       if ("city" %in% df.sel$type) {
@@ -267,7 +262,7 @@ run_app <- function(filename="default.rds", ...) {
             color = "blue",
             opacity = 1,
             radius = 2*10^4,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -278,7 +273,7 @@ run_app <- function(filename="default.rds", ...) {
             color = "grey",
             weight = 1,
             fillColor = "blue",
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -289,12 +284,12 @@ run_app <- function(filename="default.rds", ...) {
             color = "blue",
             opacity = 1,
             weight = 1,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
       # area, region, sea
-      if (df.sel$type %in% c("area", "region", "sea")) {
+      if (any(df.sel$type %in% c("area", "region", "sea"))) {
         leaflet::leafletProxy(
           "map_euro",
           data = df.sel %>% dplyr::filter(.data$sf_type=="POINT")
@@ -304,7 +299,7 @@ run_app <- function(filename="default.rds", ...) {
             radius = 10^5,
             opacity = 1,
             weight = 0,
-            layerId = "selected"
+            group = "selected"
           )
 
         leaflet::leafletProxy(
@@ -315,7 +310,7 @@ run_app <- function(filename="default.rds", ...) {
             color = "blue",
             weight = 50,
             opacity = 0.2,
-            layerId = "selected"
+            group = "selected"
           )
 
         leaflet::leafletProxy(
@@ -326,7 +321,7 @@ run_app <- function(filename="default.rds", ...) {
             color = "blue",
             opacity = 1,
             weight = 0,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -334,8 +329,8 @@ run_app <- function(filename="default.rds", ...) {
       # some polygons are invalid, therefore the when an error is encountered
       # the mean of all the coordinates is taken as poor-mans centroid
       center.coordinates <- tryCatch(
-        expr = sf::st_coordinates(sf::st_centroid(df.sel$geometry[1])),
-        error = function(e) as.vector(colMeans(sf::st_coordinates(df.sel$geometry[1])))
+        expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel$geometry))),
+        error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel$geometry))))
       )
       # center.coordinates <- sf::st_coordinates(sf::st_centroid(df.sel$geometry[1]))
       # print(center.coordinates)

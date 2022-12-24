@@ -15,8 +15,8 @@ topo_ui <- function(datasets, ...) {
   sidebarLayout(
 
     # show the interaction in the sidebar
-    sidebarPanel(
-      width=3,
+    div(
+      class = "col-xs-3",
       style = "height: 100vh; height: calc(var(--vh, 1vh) * 100); display: flex; flex-flow: column; margin-bottom: 0;",
 
       # Application title
@@ -43,6 +43,7 @@ topo_ui <- function(datasets, ...) {
         radioButtons(
           inputId="datasets",
           label="Kies een optie",
+          selected = character(0),
           choiceNames = datasets$school,
           choiceValues = datasets$filename
         )
@@ -83,10 +84,10 @@ topo_ui <- function(datasets, ...) {
     ),
 
     # show the map on the main panel
-    mainPanel(
+    div(
+      class = "col-xs-9",
       style = "height: 100vh; height: calc(var(--vh, 1vh) * 100);",
-      leaflet::leafletOutput("map_euro", width="100%", height="100%"),
-      width=9
+      leaflet::leafletOutput("map_euro", width="100%", height="100%")
     )
   )
 }

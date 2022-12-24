@@ -1,42 +1,43 @@
-# create default dataset
+# create "Europa" dataset
 library(rnaturalearth)
 library(dplyr)
 library(sf)  # important to have such that list are returned as polygons or multilinestrings
+source(file.path("data-raw", "dataset_utils.R"))
+
 
 ## read input
-df.input <- data.frame(
-  naam = c("Nederland", "Rusland"),
-  type = "country",
-  zoekterm = c("Nederland", "Rusland")
+df.input <- read.csv(
+  file.path(
+    system.file("extdata", package="topografie"),
+    "europe.csv"
+  )
 )
 
 # modify some input
 df.input <- df.input %>%
   mutate(zoekterm=ifelse(zoekterm=="", naam, zoekterm))
 
-
-## read databases
-
-# countries
-countries <- ne_download(type="countries", category="cultural", returnclass="sf", scale="large") %>%
-  select(NAME_NL, geometry) %>%
-  rename(name_nl=NAME_NL) %>%
-  mutate(type="country")
+df.database <- load_naturalearth()
 
 ## Filter only necessary items
 df <- merge(
-  countries,
+  df.database,
   df.input,
   by.x = c("type", "name_nl"),
   by.y = c("type", "zoekterm")
 )
+
+print("Niet gevonden:")
+print(setdiff(df.input$naam, df$naam))
+
+# TODO: Ruhrgebied wordt niet gevonden!
 
 # save as rds
 saveRDS(
   df,
   file.path(
     system.file("dashboard", "data", package="topografie"),
-    "default.rds"
+    "europe.rds"
   )
 )
 

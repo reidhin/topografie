@@ -4,7 +4,7 @@
 \alias{run_app}
 \title{Run topografie shiny app}
 \usage{
-run_app(filename = "europe.rds", ...)
+run_app(filename = "default.rds", ...)
 }
 \arguments{
 \item{filename}{The file with geo-info to load into the app}

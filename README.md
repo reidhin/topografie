@@ -10,8 +10,9 @@ Dit R-pakket bevat een app die je de topografie van Europa laat oefenen.
 De app is eveneens gepubliceerd op
 <https://reidhin.shinyapps.io/topografie/>
 
-De app maakt gebruik van de topografiën die op <https://nominatim.org/>
-gepubliceerd zijn.
+De app maakt gebruik van de topografiën die op
+[nominatim](https://nominatim.org/) en
+[naturalearthdata](https://www.naturalearthdata.com/) gepubliceerd zijn.
 
 ## Installatie
 
@@ -32,8 +33,8 @@ library(topografie)
 run_app()
 ```
 
-Indien je een korte versie van de app wil opstarten (bijvoorbeeld als je
-de app verder wilt ontwikkelen), dan kun je een andere bestandsnaam
+Indien je een speciale versie van de app wil opstarten (bijvoorbeeld als
+je de app verder wilt ontwikkelen), dan kun je een andere bestandsnaam
 meegeven aan de app:
 
 ``` r

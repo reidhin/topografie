@@ -2,6 +2,9 @@
 library(rnaturalearth)
 library(dplyr)
 library(sf)  # important to have such that list are returned as polygons or multilinestrings
+source(file.path("data-raw", "dataset_utils.R"))
+
+devtools::load_all()
 
 ## read input
 df.input <- read.csv(
@@ -15,59 +18,8 @@ df.input <- read.csv(
 df.input <- df.input %>%
   mutate(zoekterm=ifelse(zoekterm=="", naam, zoekterm))
 
-
-## read databases
-
-# countries
-countries <- ne_download(type="countries", category="cultural", returnclass="sf", scale="large") %>%
-  select(NAME_NL, geometry) %>%
-  rename(name_nl=NAME_NL) %>%
-  mutate(type="country")
-
-# part of countries such as Wales, Scotland
-sub_countries <- ne_download(type="map_subunits", category="cultural", returnclass="sf", scale="large") %>%
-  select(NAME_NL, geometry) %>%
-  rename(name_nl=NAME_NL) %>%
-  mutate(type="region")
-
-# # provincies
-# provinces <- ne_download(type="admin_1_states_provinces", category="cultural", returnclass="sf", scale="large") %>%
-#   select(name_nl, geometry) %>%
-#   mutate(type="region")
-
-
-# cities (+ capitals?)
-cities <- ne_download(type="populated_places", category="cultural", returnclass="sf", scale="large") %>%
-  select(FEATURECLA, POP_MAX, NAME_NL, geometry) %>%
-  rename(name_nl=NAME_NL) %>%
-  mutate(type="city")
-
-# rivers (+ lakes)
-rivers <- ne_download(type="rivers_lake_centerlines", category="physical", returnclass="sf", scale="large") %>%
-  select(name_nl, geometry) %>%
-  mutate(type="river")
-
-# regions (Not provinces!)
-regions <- ne_download(type="geography_regions_polys", category="physical", returnclass="sf", scale="large") %>%
-  filter(REGION=="Europe") %>%
-  select(NAME_NL, geometry) %>%
-  rename(name_nl=NAME_NL) %>%
-  mutate(type="region")
-
-# marine areas
-seas <- ne_download(type="geography_marine_polys", category="physical", returnclass="sf", scale="large") %>%
-  select(name_nl, geometry) %>%
-  mutate(type="sea")
-
-# in case of duplicates, keep largest city
-cities <- cities %>%
-  group_by(name_nl) %>%
-  arrange( desc(as.numeric(POP_MAX) ) ) %>%
-  slice(1) %>%
-  ungroup()
-
-# join all items together
-df.database <- bind_rows(countries, sub_countries, cities, rivers, regions, seas)
+# load the database
+df.database <- load_naturalearth()
 
 ## Filter only necessary items
 df <- merge(
@@ -78,12 +30,6 @@ df <- merge(
 )
 
 
-# group and aggregate
-df <- df %>%
-  group_by(type, naam) %>%
-  summarise(geometry=st_union(geometry)) %>%
-  ungroup()
-
 # TODO: merge Denemarken into Scandinavië
 # Puur geografisch gezien is Scandinavië het gebied dat overeenkomt met het Scandinavisch Schiereiland,
 # dat voor het grootste deel bestaat uit het Scandinavisch Hoogland. Dit betreft de landen Noorwegen en Zweden.
@@ -92,7 +38,8 @@ df <- df %>%
 # dat Scandinavië een deel van "Norden" is (zie derde definitie)
 # https://nl.wikipedia.org/wiki/Scandinavi%C3%AB
 
-
+print("Niet gevonden:")
+print(setdiff(df$naam, df.input$naam))
 
 # save as rds
 saveRDS(
