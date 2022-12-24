@@ -13,26 +13,22 @@
 #'
 #' @export
 #'
-run_app <- function(filename="europe.rds", ...) {
+run_app <- function(filename="default.rds", ...) {
+
+  # data folder with the topography datasets
+  data_folder <- system.file("dashboard", "data", package="topografie")
+
+  # load dataset options
+  datasets <- readRDS(file.path(data_folder, "contents.rds"))
 
   # find the www map
   www <- system.file("dashboard", "www", package="topografie")
   addResourcePath("www", system.file(file.path("dashboard", "www"), package="topografie"))
 
-  # load the map
-  data_folder <- system.file("dashboard", "data", package="topografie")
-  df <- readRDS(file.path(data_folder, filename))
-
-  # add an index
-  df$index = 1:nrow(df)
-
-  # all names
-  topo.names <- df$naam
-
   ui <- fluidPage(
 
     # generic metadata
-    tags$head(tags$title("Topografie voor Kandinsky College")),
+    tags$head(tags$title("Topografie")),
     tags$head(tags$link(rel="shortcut icon", href="www/favicon.png")),
 
     # we are using shinyjs
@@ -41,71 +37,10 @@ run_app <- function(filename="europe.rds", ...) {
     # include style file
     includeCSS(file.path(www, "reidhin_style.css")),
     includeScript(file.path(www, "height.js")),
+    includeScript(file.path(www, "refocus.js")),
 
-    sidebarLayout(
-
-      # show the interaction in the sidebar
-      sidebarPanel(
-        width=3,
-        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100); display: flex; flex-flow: column; margin-bottom: 0;",
-
-        # Application title
-        h2(
-          style = "flex: 0 0 auto; margin-bottom: 24px;",
-          "Topografie Kandinsky"
-        ),
-
-        # drop-down with topo-names
-        div(
-          style = "flex: 0 0 auto;",
-          selectInput(
-            inputId="dropdown_topo_names",
-            label="Selecteer je antwoord",
-            choices=c("Kies"= "", sort(topo.names)),
-          )
-        ),
-
-        div(
-          style = "flex: 1 0 200px;",
-
-          # return correct/wrong
-          div(
-            style = "text-align: center; margin-bottom: 32px; height: 96px;",
-            h2(textOutput("text")),
-            p(textOutput("correct_answer"))
-          ),
-
-          # Go to next item
-          div(
-            id="next_item",
-            style="display: none;",
-            actionButton(
-              inputId="go_to_next",
-              label="Volgende!",
-              style="width: 100%;"
-            )
-          )
-        ),
-
-        div(
-          id = "scores",
-          style = "border-width: 1px; border-style: solid; border-color: grey; border-radius: 4px; padding: 8px; flex: 0 0 auto",
-          htmlOutput("text_statistics")
-        ),
-
-        div(
-          style = "font-size: xx-small; margin-top: 16px; flex: 0 0 auto",
-          "Created by Hans Weda \u00A9"
-        )
-      ),
-
-      # show the map on the main panel
-      mainPanel(
-        style = "height: 100vh; height: calc(var(--vh, 1vh) * 100);",
-        leaflet::leafletOutput("map_euro", width="100%", height="100%"),
-        width=9
-      )
-    )
+    # add the topographic layout
+    topo_ui(datasets)
   )
 
   server <- function(input, output, session) {
@@ -114,7 +49,7 @@ run_app <- function(filename="europe.rds", ...) {
     set.seed(as.integer(Sys.time()))
 
     # which topo-item is selected
-    selected <- reactiveVal(sample(1:length(topo.names), 1))
+    selected <- reactiveVal(NULL)
 
     # whether a choice has been made
     topo_item_chosen <- reactiveVal(NULL)
@@ -122,8 +57,81 @@ run_app <- function(filename="europe.rds", ...) {
     # number correct and wrong
     scores <- reactiveValues(correct=0, wrong=0)
 
-    # all indices to go
-    indices_to_go <- reactiveVal(1:nrow(df))
+    # define all indices to go
+    names_to_go <- reactiveVal(NULL)
+
+    # topo-filename
+    topo.filename <- reactive({
+      # get the query
+      query <- getQueryString()
+
+      # check if "topo" is in the query
+      if ("topo" %in% names(query)) {
+        # compose the filename
+        temp.filename <- paste0(tolower(query$topo), ".rds")
+        # check if the filename exists in the datasets
+        if (temp.filename %in% datasets$filename) {
+          filename <- temp.filename
+        }
+      }
+
+      filename
+    })
+
+
+    # reactive with data.frame with topo-items
+    df.topo <- reactive({
+      # load the map
+      readRDS(file.path(data_folder, topo.filename()))
+    })
+
+
+    # update some reactiveVals if needed
+    observe({
+      # set all indices to go
+      names_to_go(unique(df.topo()$naam))
+
+      # define which one is selected
+      selected(sample(unique(df.topo()$naam), 1))
+
+      # update answer options
+      updateSelectInput(
+        session,
+        inputId = "dropdown_topo_names",
+        choices=c("Kies"= "", sort(unique(df.topo()$naam))),
+        selected=""
+      )
+
+    })
+
+
+    # set the title in the sidebarPanel
+    output$title <- renderText({
+      paste(
+        "Topografie", datasets$school[datasets$filename == topo.filename()]
+      )
+    })
+
+
+    # show and hide the correct div-s depending on the filename
+    observeEvent(topo.filename(), {
+      if (topo.filename() == "default.rds") {
+        shinyjs::hide("div_topo_names")
+        shinyjs::show("div_datasets")
+      } else {
+        shinyjs::show("div_topo_names")
+        shinyjs::hide("div_datasets")
+      }
+    })
+
+
+    # when a dataset is chosen, update the query string
+    observeEvent(input$datasets, ignoreInit = TRUE, {
+      updateQueryString(
+        queryString = sprintf("?topo=%s", gsub(".rds", "", input$datasets)),
+        mode = "push"
+      )
+    })
 
 
     observeEvent(input$go_to_next, {
@@ -139,30 +147,21 @@ run_app <- function(filename="europe.rds", ...) {
       output$correct_answer <- renderText("")
 
       # select new item
-      if (length(indices_to_go()) == 0) {
+      if (length(names_to_go()) == 0) {
         # klaar!
-        showModal(modalDialog(
-          title = "Klaar!",
-          "Alle steden, landen, rivieren, streken en gebergten gehad.",
-          br(),
-          br(),
-          div(
-            id = "scores",
-            style = "border-width: 1px; border-style: solid; border-color: grey; border-radius: 4px; padding: 8px;",
-            HTML(statistics.text(scores))
-          ),
-          easyClose = TRUE,
-          footer = modalButton("Sluiten")
-        ))
-        indices_to_go(1:nrow(df))
+        showModal(modal_ready(scores))
+        names_to_go(unique(df.topo()$naam))
       }
-      if (length(indices_to_go()) == 1) {
+      if (length(names_to_go()) == 1) {
         # last item selected
-        selected(indices_to_go())
+        selected(names_to_go())
       } else {
         # sample from left over indices
-        selected(sample(indices_to_go(), 1))
+        selected(sample(names_to_go(), 1))
       }
+
+      # refocus
+      session$sendCustomMessage("refocus", list("dropdown_topo_names-selectized"))
 
     })
 
@@ -175,7 +174,7 @@ run_app <- function(filename="europe.rds", ...) {
         if (input$dropdown_topo_names == "") {
           topo_item_chosen(NULL)
         } else {
-          topo_item_chosen(which(topo.names==input$dropdown_topo_names))
+          topo_item_chosen(input$dropdown_topo_names)
         }
       }
     )
@@ -187,18 +186,20 @@ run_app <- function(filename="europe.rds", ...) {
         # goed!
         output$text <- renderText("goed")
         scores$correct <- scores$correct + 1
-        temp <- indices_to_go()
-        indices_to_go(temp[temp != selected()])
+        temp <- names_to_go()
+        names_to_go(temp[temp != selected()])
         shinyjs::show("next_item")
       } else {
         # fout!
         output$text <- renderText("fout")
         output$correct_answer <- renderText(
-          sprintf("Het goede antwoord was: %s", topo.names[selected()])
+          sprintf("Het goede antwoord was: %s", selected())
         )
         scores$wrong <- scores$wrong + 1
         shinyjs::show("next_item")
       }
+      # refocus
+      session$sendCustomMessage("refocus", list("go_to_next"))
 
     })
 
@@ -209,9 +210,12 @@ run_app <- function(filename="europe.rds", ...) {
     })
 
 
+    # launch colofon when clicked
+    observeEvent(input$colofon, showModal(modal_colofon(file.path(www, "colofon.Rmd"))))
+
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({
-      map <- leaflet::leaflet(df %>% dplyr::filter(.data$type=="country")) %>%
+      map <- leaflet::leaflet(df.topo() %>% dplyr::filter(.data$type=="country")) %>%
         leaflet::addProviderTiles("Esri.WorldTerrain") %>%
         # leaflet::addProviderTiles("Esri.WorldPhysical") %>%
         leaflet::fitBounds(-5, 40, 15, 70) %>%
@@ -222,12 +226,12 @@ run_app <- function(filename="europe.rds", ...) {
           fillColor = "lightblue"
         ) %>%
         leaflet::addCircles(
-          data = df %>% dplyr::filter(.data$type=="city"),
+          data = df.topo() %>% dplyr::filter(.data$type=="city"),
           color = "darkgrey",
           opacity = 1
         ) %>%
         leaflet::addPolylines(
-          data = df %>% dplyr::filter(.data$type=="river"),
+          data = df.topo() %>% dplyr::filter(.data$type=="river"),
           color = "lightblue",
           opacity = 1,
           weight = 1
@@ -240,13 +244,13 @@ run_app <- function(filename="europe.rds", ...) {
     observe({
 
       # obtain the selected item
-      df.sel <- df %>%
-        dplyr::filter(.data$index==selected()) %>%
+      df.sel <- df.topo() %>%
+        dplyr::filter(.data$naam==selected()) %>%
         dplyr::mutate(sf_type = sf::st_geometry_type(.data$geometry))
 
       # remove the previous layer
       leaflet::leafletProxy("map_euro") %>%
-        leaflet::removeShape(layerId = "selected")
+        leaflet::clearGroup(group = "selected")
 
       # city
       if ("city" %in% df.sel$type) {
@@ -255,7 +259,7 @@ run_app <- function(filename="europe.rds", ...) {
             color = "blue",
             opacity = 1,
             radius = 2*10^4,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -266,7 +270,7 @@ run_app <- function(filename="europe.rds", ...) {
             color = "grey",
             weight = 1,
             fillColor = "blue",
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -277,12 +281,12 @@ run_app <- function(filename="europe.rds", ...) {
             color = "blue",
             opacity = 1,
             weight = 1,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
-      # area
-      if ("area" %in% df.sel$type) {
+      # area, region, sea
+      if (any(df.sel$type %in% c("area", "region", "sea"))) {
         leaflet::leafletProxy(
           "map_euro",
           data = df.sel %>% dplyr::filter(.data$sf_type=="POINT")
@@ -292,7 +296,7 @@ run_app <- function(filename="europe.rds", ...) {
             radius = 10^5,
             opacity = 1,
             weight = 0,
-            layerId = "selected"
+            group = "selected"
           )
 
         leaflet::leafletProxy(
@@ -303,7 +307,7 @@ run_app <- function(filename="europe.rds", ...) {
             color = "blue",
             weight = 50,
             opacity = 0.2,
-            layerId = "selected"
+            group = "selected"
           )
 
         leaflet::leafletProxy(
@@ -314,7 +318,7 @@ run_app <- function(filename="europe.rds", ...) {
             color = "blue",
             opacity = 1,
             weight = 0,
-            layerId = "selected"
+            group = "selected"
           )
       }
 
@@ -322,8 +326,8 @@ run_app <- function(filename="europe.rds", ...) {
       # some polygons are invalid, therefore the when an error is encountered
       # the mean of all the coordinates is taken as poor-mans centroid
       center.coordinates <- tryCatch(
-        expr = sf::st_coordinates(sf::st_centroid(df.sel$geometry[1])),
-        error = function(e) as.vector(colMeans(sf::st_coordinates(df.sel$geometry[1])))
+        expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel$geometry))),
+        error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel$geometry))))
       )
       # center.coordinates <- sf::st_coordinates(sf::st_centroid(df.sel$geometry[1]))
       # print(center.coordinates)
