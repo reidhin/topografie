@@ -5,9 +5,9 @@ library(sf)  # important to have such that list are returned as polygons or mult
 
 ## read input
 df.input <- data.frame(
-  naam = c("Nederland", "Rusland"),
+  naam = c("Nederland"),
   type = "country",
-  zoekterm = c("Nederland", "Rusland")
+  zoekterm = c("Nederland")
 )
 
 # modify some input
