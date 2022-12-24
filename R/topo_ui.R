@@ -33,6 +33,7 @@ topo_ui <- function(datasets, ...) {
           inputId="dropdown_topo_names",
           label="Selecteer je antwoord",
           choices=NULL,
+          width = "100%"
         )
       ),
 
@@ -79,7 +80,10 @@ topo_ui <- function(datasets, ...) {
 
       div(
         style = "font-size: xx-small; margin-top: 16px; flex: 0 0 auto",
-        "Created by Hans Weda \u00A9"
+        actionLink(
+          inputId = "colofon",
+          "Created by Hans Weda \u00A9"
+        )
       )
     ),
 

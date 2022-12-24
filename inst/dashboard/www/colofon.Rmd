@@ -1,0 +1,4 @@
+Deze Shiny App is gemaakt door Hans Weda in opdracht van zijn kinderen. 
+De broncode is beschikbaar op [Github](https://github.com/reidhin/topografie).
+
+Created by Hans Weda &copy;

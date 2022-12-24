@@ -37,6 +37,7 @@ run_app <- function(filename="default.rds", ...) {
     # include style file
     includeCSS(file.path(www, "reidhin_style.css")),
     includeScript(file.path(www, "height.js")),
+    includeScript(file.path(www, "refocus.js")),
 
     # add the topographic layout
     topo_ui(datasets)
@@ -148,19 +149,7 @@ run_app <- function(filename="default.rds", ...) {
       # select new item
       if (length(names_to_go()) == 0) {
         # klaar!
-        showModal(modalDialog(
-          title = "Klaar!",
-          "Alle steden, landen, rivieren, streken en gebergten gehad.",
-          br(),
-          br(),
-          div(
-            id = "scores",
-            style = "border-width: 1px; border-style: solid; border-color: grey; border-radius: 4px; padding: 8px;",
-            HTML(statistics.text(scores))
-          ),
-          easyClose = TRUE,
-          footer = modalButton("Sluiten")
-        ))
+        showModal(modal_ready(scores))
         names_to_go(unique(df.topo()$naam))
       }
       if (length(names_to_go()) == 1) {
@@ -170,6 +159,9 @@ run_app <- function(filename="default.rds", ...) {
         # sample from left over indices
         selected(sample(names_to_go(), 1))
       }
+
+      # refocus
+      session$sendCustomMessage("refocus", list("dropdown_topo_names-selectized"))
 
     })
 
@@ -206,6 +198,8 @@ run_app <- function(filename="default.rds", ...) {
         scores$wrong <- scores$wrong + 1
         shinyjs::show("next_item")
       }
+      # refocus
+      session$sendCustomMessage("refocus", list("go_to_next"))
 
     })
 
@@ -215,6 +209,9 @@ run_app <- function(filename="default.rds", ...) {
       output$text_statistics <- renderUI(HTML(statistics.text(scores)))
     })
 
+
+    # launch colofon when clicked
+    observeEvent(input$colofon, showModal(modal_colofon(file.path(www, "colofon.Rmd"))))
 
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({

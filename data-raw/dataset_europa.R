@@ -31,6 +31,8 @@ print("Niet gevonden:")
 print(setdiff(df.input$naam, df$naam))
 
 # TODO: Ruhrgebied wordt niet gevonden!
+# TODO: Noordelijke IJszee centreert op een gekke plek
+# TODO: Straat van Gibraltar ziet er niet goed uit
 
 # save as rds
 saveRDS(
