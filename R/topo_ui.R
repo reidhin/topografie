@@ -26,14 +26,16 @@ topo_ui <- function(datasets, ...) {
       ),
 
       # drop-down with topo-names
+      # check options here: https://selectize.dev/docs/usage
       div(
         id = "div_topo_names",
         style = "flex: 0 0 auto; display: none;",
-        selectInput(
+        selectizeInput(
           inputId="dropdown_topo_names",
           label="Selecteer je antwoord",
           choices=NULL,
-          width = "100%"
+          width = "100%",
+          options = list(openOnFocus=FALSE)
         )
       ),
 
