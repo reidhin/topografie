@@ -23,3 +23,21 @@ modal_colofon <- function(filename) {
     footer = modalButton("Sluiten")
   )
 }
+
+modal_startup <- function(datasets) {
+  modalDialog(
+    title = "Kies je topografie opdracht",
+    # drop-down with dataset options
+    div(
+      id = "div_datasets",
+      style = "flex: 0 0 auto;",
+      radioButtons(
+        inputId="datasets",
+        label="Kies een optie",
+        choiceNames = datasets$school,
+        choiceValues = datasets$filename
+      )
+    ),
+    footer = actionButton(inputId = "start", label = "Starten!")
+  )
+}

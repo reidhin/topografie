@@ -26,6 +26,7 @@ topo_ui <- function(datasets, ...) {
       ),
 
       # drop-down with topo-names
+      # check options here: https://selectize.dev/docs/usage
       div(
         id = "div_topo_names",
         style = "flex: 0 0 auto; display: none;",
@@ -34,19 +35,6 @@ topo_ui <- function(datasets, ...) {
           label="Selecteer je antwoord",
           choices=NULL,
           width = "100%"
-        )
-      ),
-
-      # drop-down with dataset options
-      div(
-        id = "div_datasets",
-        style = "flex: 0 0 auto;",
-        radioButtons(
-          inputId="datasets",
-          label="Kies een optie",
-          selected = character(0),
-          choiceNames = datasets$school,
-          choiceValues = datasets$filename
         )
       ),
 

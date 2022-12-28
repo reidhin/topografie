@@ -93,6 +93,8 @@ run_app <- function(filename="default.rds", ...) {
 
       # define which one is selected
       selected(sample(unique(df.topo()$naam), 1))
+      # For debugging purposes:
+      # selected("Straat van Gibraltar")
 
       # update answer options
       updateSelectInput(
@@ -113,20 +115,23 @@ run_app <- function(filename="default.rds", ...) {
     })
 
 
-    # show and hide the correct div-s depending on the filename
+    # show and hide the startup-modal and correct div-s depending on the filename
     observeEvent(topo.filename(), {
       if (topo.filename() == "default.rds") {
         shinyjs::hide("div_topo_names")
-        shinyjs::show("div_datasets")
+        showModal(modal_startup(datasets))
       } else {
         shinyjs::show("div_topo_names")
-        shinyjs::hide("div_datasets")
       }
     })
 
 
     # when a dataset is chosen, update the query string
-    observeEvent(input$datasets, ignoreInit = TRUE, {
+    observeEvent(input$start, ignoreInit = TRUE, {
+      # close the modal
+      removeModal()
+
+      # start the correct topo-challenge
       updateQueryString(
         queryString = sprintf("?topo=%s", gsub(".rds", "", input$datasets)),
         mode = "push"
@@ -159,9 +164,6 @@ run_app <- function(filename="default.rds", ...) {
         # sample from left over indices
         selected(sample(names_to_go(), 1))
       }
-
-      # refocus
-      session$sendCustomMessage("refocus", list("dropdown_topo_names-selectized"))
 
     })
 
@@ -212,6 +214,7 @@ run_app <- function(filename="default.rds", ...) {
 
     # launch colofon when clicked
     observeEvent(input$colofon, showModal(modal_colofon(file.path(www, "colofon.Rmd"))))
+
 
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({

@@ -1,3 +1,8 @@
+# libraries
+library(dplyr)
+library(httr)
+library(sf)  # important to have such that list are returned as polygons or multilinestrings
+
 # dataset utils
 
 load_naturalearth <- function() {
@@ -57,3 +62,67 @@ load_naturalearth <- function() {
 
   return(df.database)
 }
+
+
+# function to query nominatim api
+get_from_nominatim <- function(query, polygon, resolution, language) {
+
+  # url to use
+  osm.base.url <- "http://nominatim.openstreetmap.org/search"
+
+  # Formulate query
+  request <- GET(
+    url=osm.base.url,
+    query = list(
+      q=query,
+      format="geojson",
+      polygon_geojson=polygon,
+      polygon_threshold=resolution,
+      `accept-language`=language,
+      limit=1
+    )
+  )
+  response <- content(request, as="text", encoding="UTF-8")
+  print(sprintf("query: %s, status: %s", query, request$status_code))
+  out <- geojsonsf::geojson_sf(response)
+
+  return(out)
+}
+
+
+# function to process nominatim
+wrapper_nominatim <- function(df.in) {
+  # parameters
+  resolution <- 0.01
+  language <- "nl"
+
+  # check if the input is a city
+  df.in <- df.in %>%
+    mutate(polygon=ifelse(type=="city", 0, 1))
+
+  # run through data.frame
+  out <- data.frame()
+  for (i in 1:nrow(df.in)) {
+    # get response from nominatim
+    temp <- get_from_nominatim(
+      query=df.in$zoekterm[i],
+      polygon=df.in$polygon[i],
+      resolution = resolution,
+      language = language
+    )
+    temp$naam <- df.in$naam[i]
+    temp$type <- df.in$type[i]
+    out <- rbind(out, temp %>% select(-contains("icon")))
+
+    # a maximum of one request per second is allowed
+    Sys.sleep(1)
+  }
+
+  # select only necessary columns
+  out <- out %>%
+    select(type, naam, geometry)
+
+  return(out)
+}
+
+
