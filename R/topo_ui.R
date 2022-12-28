@@ -30,12 +30,11 @@ topo_ui <- function(datasets, ...) {
       div(
         id = "div_topo_names",
         style = "flex: 0 0 auto; display: none;",
-        selectizeInput(
+        selectInput(
           inputId="dropdown_topo_names",
           label="Selecteer je antwoord",
           choices=NULL,
-          width = "100%",
-          options = list(openOnFocus=FALSE)
+          width = "100%"
         )
       ),
 

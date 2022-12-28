@@ -160,10 +160,6 @@ run_app <- function(filename="default.rds", ...) {
         selected(sample(names_to_go(), 1))
       }
 
-      # refocus
-      session$sendCustomMessage("refocus", list("dropdown_topo_names-selectized"))
-
-
     })
 
 
