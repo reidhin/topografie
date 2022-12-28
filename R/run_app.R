@@ -113,20 +113,23 @@ run_app <- function(filename="default.rds", ...) {
     })
 
 
-    # show and hide the correct div-s depending on the filename
+    # show and hide the startup-modal and correct div-s depending on the filename
     observeEvent(topo.filename(), {
       if (topo.filename() == "default.rds") {
         shinyjs::hide("div_topo_names")
-        shinyjs::show("div_datasets")
+        showModal(modal_startup(datasets))
       } else {
         shinyjs::show("div_topo_names")
-        shinyjs::hide("div_datasets")
       }
     })
 
 
     # when a dataset is chosen, update the query string
-    observeEvent(input$datasets, ignoreInit = TRUE, {
+    observeEvent(input$start, ignoreInit = TRUE, {
+      # close the modal
+      removeModal()
+
+      # start the correct topo-challenge
       updateQueryString(
         queryString = sprintf("?topo=%s", gsub(".rds", "", input$datasets)),
         mode = "push"

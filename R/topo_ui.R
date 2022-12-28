@@ -38,19 +38,6 @@ topo_ui <- function(datasets, ...) {
         )
       ),
 
-      # drop-down with dataset options
-      div(
-        id = "div_datasets",
-        style = "flex: 0 0 auto;",
-        radioButtons(
-          inputId="datasets",
-          label="Kies een optie",
-          selected = character(0),
-          choiceNames = datasets$school,
-          choiceValues = datasets$filename
-        )
-      ),
-
       div(
         style = "flex: 1 0 200px;",
 
