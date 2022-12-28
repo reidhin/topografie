@@ -22,7 +22,7 @@ run_app <- function(filename="default.rds", ...) {
   datasets <- readRDS(file.path(data_folder, "contents.rds"))
 
   # load all countries
-  all_countries <- readRDS(file.path(data_folder, "all_countries.rds"))
+  all_countries <- readRDS(file.path(data_folder, "all_european_countries.rds"))
 
   # find the www map
   www <- system.file("dashboard", "www", package="topografie")
@@ -244,12 +244,18 @@ run_app <- function(filename="default.rds", ...) {
           data=all_countries,
           color = "grey",
           weight = 1,
-          fillColor = FALSE
+          fill = FALSE
         ) %>%
         leaflet::addCircles(
           data = df.topo() %>% dplyr::filter(.data$type=="city"),
           color = "darkgrey",
           opacity = 1
+        ) %>%
+        leaflet::addCircles(
+          data = df.topo() %>% dplyr::filter(.data$type=="city"),
+          color = "firebrick",
+          opacity = 0.7,
+          group = "Physical"
         ) %>%
         leaflet::addPolylines(
           data = df.topo() %>% dplyr::filter(.data$type=="river"),
