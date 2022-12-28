@@ -18,7 +18,15 @@ df.input <- df.input %>%
 ## read databases
 
 # countries
-countries <- ne_download(type="countries", category="cultural", returnclass="sf", scale="large") %>%
+countries <- ne_download(type="countries", category="cultural", returnclass="sf", scale="large")
+
+europe <- countries %>%
+  filter(CONTINENT=="Europe") %>%
+  select(NAME_NL, geometry) %>%
+  rename(name_nl=NAME_NL) %>%
+  mutate(type="country")
+
+countries <- countries %>%
   select(NAME_NL, geometry) %>%
   rename(name_nl=NAME_NL) %>%
   mutate(type="country")
@@ -37,6 +45,22 @@ saveRDS(
   file.path(
     system.file("dashboard", "data", package="topografie"),
     "default.rds"
+  )
+)
+
+saveRDS(
+  countries,
+  file.path(
+    system.file("dashboard", "data", package="topografie"),
+    "all_countries.rds"
+  )
+)
+
+saveRDS(
+  europe,
+  file.path(
+    system.file("dashboard", "data", package="topografie"),
+    "all_european_countries.rds"
   )
 )
 

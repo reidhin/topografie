@@ -21,6 +21,9 @@ run_app <- function(filename="default.rds", ...) {
   # load dataset options
   datasets <- readRDS(file.path(data_folder, "contents.rds"))
 
+  # load all countries
+  all_countries <- readRDS(file.path(data_folder, "all_european_countries.rds"))
+
   # find the www map
   www <- system.file("dashboard", "www", package="topografie")
   addResourcePath("www", system.file(file.path("dashboard", "www"), package="topografie"))
@@ -94,7 +97,10 @@ run_app <- function(filename="default.rds", ...) {
       # define which one is selected
       selected(sample(unique(df.topo()$naam), 1))
       # For debugging purposes:
-      # selected("Straat van Gibraltar")
+      #selected("Rusland")
+      #selected("Nederland")
+      #selected("Atlantische Oceaan")
+      #selected("Malta")
 
       # update answer options
       updateSelectInput(
@@ -219,25 +225,47 @@ run_app <- function(filename="default.rds", ...) {
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({
       map <- leaflet::leaflet(df.topo() %>% dplyr::filter(.data$type=="country")) %>%
-        leaflet::addProviderTiles("Esri.WorldTerrain") %>%
-        # leaflet::addProviderTiles("Esri.WorldPhysical") %>%
+        # leaflet::addPolygons(
+        #   data=all_countries,
+        #   color = "grey",
+        #   weight = 1,
+        #   fillColor = "antiquewhite",
+        #   fillOpacity = 1,
+        #   group = "default"
+        # ) %>%
+        leaflet::addProviderTiles("Esri.WorldTerrain", group="Terrain") %>%
+        leaflet::addProviderTiles("Esri.WorldShadedRelief", group="Relief") %>%
+        leaflet::addProviderTiles("Esri.WorldPhysical", group="Physical") %>%
+        leaflet::addProviderTiles("CartoDB.VoyagerNoLabels", group="Voyager") %>%
+        # leaflet::addProviderTiles("Stamen.TonerBackground", group="Stamen") %>%
+        # leaflet::addProviderTiles("CartoDB.PositronNoLabels", group="Positron") %>%
         leaflet::fitBounds(-5, 40, 15, 70) %>%
         leaflet::addPolygons(
+          data=all_countries,
           color = "grey",
           weight = 1,
-          # opacity = 1,
-          fillColor = "lightblue"
+          fill = FALSE
         ) %>%
         leaflet::addCircles(
           data = df.topo() %>% dplyr::filter(.data$type=="city"),
           color = "darkgrey",
           opacity = 1
         ) %>%
+        leaflet::addCircles(
+          data = df.topo() %>% dplyr::filter(.data$type=="city"),
+          color = "firebrick",
+          opacity = 0.7,
+          group = "Physical"
+        ) %>%
         leaflet::addPolylines(
           data = df.topo() %>% dplyr::filter(.data$type=="river"),
           color = "lightblue",
           opacity = 1,
           weight = 1
+        ) %>%
+        leaflet::addLayersControl(
+          baseGroups = c("Terrain", "Relief", "Physical", "Voyager"),
+          options = leaflet::layersControlOptions(collapsed = TRUE)
         )
     })
 
@@ -332,10 +360,12 @@ run_app <- function(filename="default.rds", ...) {
         expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel$geometry))),
         error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel$geometry))))
       )
-      # center.coordinates <- sf::st_coordinates(sf::st_centroid(df.sel$geometry[1]))
-      # print(center.coordinates)
+
+      # Sometimes the tiles and polygons are not aligned after a leaflet::flyto,
+      # in particular if the panning distance is small.
+      # By adding a random zoom, I hope to avoid this mismatch.
       leaflet::leafletProxy("map_euro") %>%
-        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=4)
+        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=rnorm(1, mean=4, sd=0.1))
 
     })
 

@@ -34,7 +34,7 @@ modal_startup <- function(datasets) {
       radioButtons(
         inputId="datasets",
         label="Kies een optie",
-        choiceNames = datasets$school,
+        choiceNames = paste(datasets$region, datasets$school, sep=", "),
         choiceValues = datasets$filename
       )
     ),

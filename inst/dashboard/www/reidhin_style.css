@@ -1,3 +1,5 @@
 
-/* for proper scaling on mobile devices */
-
+/* background color leaflet */
+.leaflet-container {
+  background: aliceblue;
+}
