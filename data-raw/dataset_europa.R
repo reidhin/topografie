@@ -27,12 +27,21 @@ df <- merge(
   by.y = c("type", "zoekterm")
 )
 
-print("Niet gevonden:")
-print(setdiff(df.input$naam, df$naam))
+cat("Niet gevonden:")
+cat(setdiff(df.input$naam, df$naam))
 
-# TODO: Ruhrgebied wordt niet gevonden!
 # TODO: Noordelijke IJszee centreert op een gekke plek
-# TODO: Straat van Gibraltar ziet er niet goed uit
+
+# Search in Nominatim
+namen <- c(setdiff(df.input$naam, df$naam), "Straat van Gibraltar")
+df.nominatim <- wrapper_nominatim(df.input %>% filter(naam %in% namen))
+
+# add to output
+df <- bind_rows(
+  df %>% filter(!(naam %in% namen)),
+  df.nominatim
+)
+
 
 # save as rds
 saveRDS(

@@ -93,6 +93,8 @@ run_app <- function(filename="default.rds", ...) {
 
       # define which one is selected
       selected(sample(unique(df.topo()$naam), 1))
+      # For debugging purposes:
+      # selected("Straat van Gibraltar")
 
       # update answer options
       updateSelectInput(
@@ -212,6 +214,7 @@ run_app <- function(filename="default.rds", ...) {
 
     # launch colofon when clicked
     observeEvent(input$colofon, showModal(modal_colofon(file.path(www, "colofon.Rmd"))))
+
 
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({
