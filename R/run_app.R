@@ -360,8 +360,12 @@ run_app <- function(filename="default.rds", ...) {
         expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel$geometry))),
         error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel$geometry))))
       )
+
+      # Sometimes the tiles and polygons are not aligned after a leaflet::flyto,
+      # in particular if the panning distance is small.
+      # By adding a random zoom, I hope to avoid this mismatch.
       leaflet::leafletProxy("map_euro") %>%
-        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=4)
+        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=rnorm(1, mean=4, sd=0.1))
 
     })
 
