@@ -239,7 +239,7 @@ run_app <- function(filename="default.rds", ...) {
         leaflet::addProviderTiles("CartoDB.VoyagerNoLabels", group="Voyager") %>%
         # leaflet::addProviderTiles("Stamen.TonerBackground", group="Stamen") %>%
         # leaflet::addProviderTiles("CartoDB.PositronNoLabels", group="Positron") %>%
-        leaflet::fitBounds(-5, 40, 15, 70) %>%
+        # leaflet::fitBounds(-5, 40, 15, 70) %>%
         leaflet::addPolygons(
           data=all_countries,
           color = "grey",
@@ -286,10 +286,11 @@ run_app <- function(filename="default.rds", ...) {
       # city
       if ("city" %in% df.sel$type) {
         leaflet::leafletProxy("map_euro", data = df.sel) %>%
-          leaflet::addCircles(
+          leaflet::addCircleMarkers(
             color = "blue",
             opacity = 1,
-            radius = 2*10^4,
+            radius = 10,
+            weight = 2,
             group = "selected"
           )
       }
@@ -353,19 +354,30 @@ run_app <- function(filename="default.rds", ...) {
           )
       }
 
+      # simplify the geometry first, such that far-away islands are ignored in:
+      # 1. Flying to the appropriate center
+      # 2. Calculating an appropriate bounding box
+      df.sel.simpl <- sf::st_simplify(df.sel, dTolerance = 10000)
+
       # fly to appropriate point
       # some polygons are invalid, therefore the when an error is encountered
       # the mean of all the coordinates is taken as poor-mans centroid
       center.coordinates <- tryCatch(
-        expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel$geometry))),
-        error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel$geometry))))
+        expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel.simpl$geometry))),
+        error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel.simpl$geometry))))
       )
+
+      # Find size of geometry to determine appropriate zoom factor.
+      # The formula is purely heuristic
+      bb <-sf::st_bbox(df.sel.simpl)
+      diagonal <- sqrt((bb[3]-bb[1])**2 + (bb[4]-bb[2])**2)
+      zoomfact <- 3 * exp(-10*(diagonal/180)) + 3
 
       # Sometimes the tiles and polygons are not aligned after a leaflet::flyto,
       # in particular if the panning distance is small.
       # By adding a random zoom, I hope to avoid this mismatch.
       leaflet::leafletProxy("map_euro") %>%
-        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=rnorm(1, mean=4, sd=0.1))
+        leaflet::flyTo(lng = center.coordinates[1], lat = center.coordinates[2], zoom=rnorm(1, mean=zoomfact, sd=0.1))
 
     })
 
