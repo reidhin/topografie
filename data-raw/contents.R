@@ -3,7 +3,7 @@
 contents <- data.frame(
   school = c("Kandinsky", "NSV2"),
   region = c("Europa", "Noord-Europa"),
-  filename = c("europe.rds", "north_europe.rds")
+  filename = c("europe.rds", "northern_europe.rds")
 )
 
 
