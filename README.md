@@ -42,8 +42,49 @@ library(topografie)
 run_app("europe2.rds")
 ```
 
-In de toekomst zal deze functionaliteit gebruikt worden om ook andere
-werelddelen te kunnen oefenen.
+Deze functionaliteit wordt gebruikt om ook andere werelddelen te kunnen
+oefenen.
+
+## Datasets
+
+De gebruikte datasets worden gemaakt vanuit input bestanden in \*.csv
+formaat. Hierin staat een lijst met topografie-namen van steden, landen,
+rivieren, etc. samen met het type topografie, zoals city, country, etc.
+Deze lijst wordt gebruikt om de grenzen en posities op te halen vanuit
+[nominatim](https://nominatim.org/) en
+[naturalearthdata](https://www.naturalearthdata.com/). De gebruikte
+scripts staan in de folder `data-raw`. De gemaakte datasets worden in de
+folder `inst/dashboard/data` geplaatst. Hierin staat ook een
+`contents.rds` bestand dat door de app wordt gebruikt om een overzicht
+van de beschikbare bestanden te presenteren. Indien je een nieuwe
+dataset wil toevoegen kun je, nadat je de code hebt gecloned, in deze
+folders nieuwe scripts aanmaken.
+
+## Project organisatie
+
+    ├── app.R                               <- Script om de app juist op te starten op shinyapps.io
+    ├── data-raw                            <- Scripts om de datasets te maken
+    ├── DESCRIPTION                         <- Project beschrijving
+    ├── inst
+    │   ├── dashboard
+    │   │   ├── data                        <- Folder met de datasets voor het dashboard
+    │   │   └── www                         <- Folder met style-files, javascript en favicon
+    │   └── extdata                         <- Folder met input *.csv bestanden voor de datasets
+    ├── LICENSE.md                          <- Licentie
+    ├── man                                 <- Help-bestanden met uitleg over de functies
+    │   ├── run_app.Rd
+    │   └── topo_ui.Rd
+    ├── NAMESPACE
+    ├── NEWS.md
+    ├── R                                
+    │   ├── run_app.R                       <- Hoofdfunctie die de app opstart
+    │   ├── topo_ui.R                       <- Functies voor de gebruikersinterface
+    │   ├── util_modals.R                   <- Functies voor de gebruikte modals
+    │   └── utils.R                         <- Overige hulpfuncties
+    ├── README.md
+    ├── README.Rmd                          <- README met uitleg en beschrijving van het project
+    ├── rsconnect                           <- Folder met hulpbestanden om de app op shinyapps te publiceren
+    └── topografie.Rproj
 
 ## Licentie
 
