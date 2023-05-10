@@ -37,6 +37,14 @@ df <- merge(
 # Dit is de definitie die in Scandinavië zelf wordt gehanteerd en men kan aan de hand van deze definitie stellen
 # dat Scandinavië een deel van "Norden" is (zie derde definitie)
 # https://nl.wikipedia.org/wiki/Scandinavi%C3%AB
+# add to output
+df <- bind_rows(
+  df %>% filter(!(naam %in% "Scandinavië")),
+  df %>%
+    filter(naam %in% c("Noorwegen", "Zweden", "Finland", "Denemarken")) %>%
+    mutate(naam = "Scandinavië", type="region")
+)
+
 
 print("Niet gevonden:")
 print(setdiff(df$naam, df.input$naam))
@@ -46,7 +54,7 @@ saveRDS(
   df,
   file.path(
     system.file("dashboard", "data", package="topografie"),
-    "north_europe.rds"
+    "northern_europe.rds"
   )
 )
 
