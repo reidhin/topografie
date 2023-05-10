@@ -1,9 +1,9 @@
 # create contents dataset
 
 contents <- data.frame(
-  school = c("Kandinsky", "NSV2"),
-  region = c("Europa", "Noord-Europa"),
-  filename = c("europe.rds", "northern_europe.rds")
+  school = c("Kandinsky", "NSV2", "NSV2"),
+  region = c("Europa", "Noord-Europa", "Europa"),
+  filename = c("europe.rds", "northern_europe.rds", "small_europe.rds")
 )
 
 
