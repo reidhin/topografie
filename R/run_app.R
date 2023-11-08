@@ -10,6 +10,7 @@
 #' @import shiny
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
+#' @importFrom stats rnorm
 #'
 #' @export
 #'

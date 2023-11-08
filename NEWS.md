@@ -1,3 +1,9 @@
+# topografie 0.3.0
+
+* Allow different geographic projections
+* Allow different background files
+* Added an Earth dataset
+
 # topografie 0.2.0
 
 * Allow different datasets
