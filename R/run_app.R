@@ -21,9 +21,6 @@ run_app <- function(filename="default.rds", ...) {
   # load dataset options
   datasets <- readRDS(file.path(data_folder, "contents.rds"))
 
-  # load all countries
-  all_countries <- readRDS(file.path(data_folder, "all_european_countries.rds"))
-
   # find the www map
   www <- system.file("dashboard", "www", package="topografie")
   addResourcePath("www", system.file(file.path("dashboard", "www"), package="topografie"))
@@ -60,6 +57,12 @@ run_app <- function(filename="default.rds", ...) {
     # number correct and wrong
     scores <- reactiveValues(correct=0, wrong=0)
 
+    # crs of the projection
+    crs <- reactiveVal(leaflet::leafletCRS())
+
+    # The filename of the background
+    background.filename <- reactiveVal("all_european_countries.rds")
+
     # define all indices to go
     names_to_go <- reactiveVal(NULL)
 
@@ -75,12 +78,13 @@ run_app <- function(filename="default.rds", ...) {
         # check if the filename exists in the datasets
         if (temp.filename %in% datasets$filename) {
           filename <- temp.filename
+          crs(datasets$crs[[which(datasets$filename == filename)]])
+          background.filename(datasets$background[datasets$filename == filename])
         }
       }
 
       filename
     })
-
 
     # reactive with data.frame with topo-items
     df.topo <- reactive({
@@ -88,6 +92,10 @@ run_app <- function(filename="default.rds", ...) {
       readRDS(file.path(data_folder, topo.filename()))
     })
 
+    # reactive to load all countries
+    all_countries <- reactive({
+      readRDS(file.path(data_folder, background.filename()))
+    })
 
     # update some reactiveVals if needed
     observe({
@@ -97,10 +105,9 @@ run_app <- function(filename="default.rds", ...) {
       # define which one is selected
       selected(sample(unique(df.topo()$naam), 1))
       # For debugging purposes:
-      #selected("Rusland")
       #selected("Nederland")
       #selected("Atlantische Oceaan")
-      #selected("Malta")
+      #selected("Noordelijke IJszee")
 
       # update answer options
       updateSelectInput(
@@ -221,10 +228,54 @@ run_app <- function(filename="default.rds", ...) {
     # launch colofon when clicked
     observeEvent(input$colofon, showModal(modal_colofon(file.path(www, "colofon.Rmd"))))
 
-
     # The initial map with the items
     output$map_euro <- leaflet::renderLeaflet({
-      map <- leaflet::leaflet(df.topo() %>% dplyr::filter(.data$type=="country")) %>%
+      map <- leaflet::leaflet(
+        df.topo() %>% dplyr::filter(.data$type=="country"),
+        options = leaflet::leafletOptions(
+          crs = crs()
+        )
+      )
+
+      if (crs()$crsClass == "L.CRS.EPSG3857") {
+        # the default CRS - in this case we can add Provider Tiles
+        map <- map %>%
+          leaflet::addProviderTiles("Esri.WorldTerrain", group="Terrain") %>%
+          leaflet::addProviderTiles("Esri.WorldShadedRelief", group="Relief") %>%
+          leaflet::addProviderTiles("Esri.WorldPhysical", group="Physical") %>%
+          leaflet::addProviderTiles("CartoDB.VoyagerNoLabels", group="Voyager") %>%
+          # leaflet::addProviderTiles("Stamen.TonerBackground", group="Stamen") %>%
+          # leaflet::addProviderTiles("CartoDB.PositronNoLabels", group="Positron") %>%
+          # leaflet::fitBounds(-5, 40, 15, 70) %>%
+          leaflet::addLayersControl(
+            baseGroups = c("Terrain", "Relief", "Physical", "Voyager"),
+            options = leaflet::layersControlOptions(collapsed = TRUE)
+          ) %>%
+          leaflet::addPolygons(
+            data=all_countries(),
+            color = "grey",
+            weight = 1,
+            fill = FALSE
+          )
+      } else {
+        map <- map %>%
+          leaflet::addGraticule(
+            sphere = TRUE,
+            style= list(color= '#777', weight= 2, opacity= 1, fillColor= '#ccffff', fillOpacity= .5)
+          ) %>%
+          leaflet::addGraticule(
+            style= list(color= '#999', weight= 0.5, opacity= 1)
+          ) %>%
+          leaflet::addPolygons(
+            data=all_countries(),
+            color = "grey",
+            weight = 1,
+            fillColor = "white",
+            fillOpacity = 1
+          )
+      }
+
+      map <- map %>%
         # leaflet::addPolygons(
         #   data=all_countries,
         #   color = "grey",
@@ -233,20 +284,7 @@ run_app <- function(filename="default.rds", ...) {
         #   fillOpacity = 1,
         #   group = "default"
         # ) %>%
-        leaflet::addProviderTiles("Esri.WorldTerrain", group="Terrain") %>%
-        leaflet::addProviderTiles("Esri.WorldShadedRelief", group="Relief") %>%
-        leaflet::addProviderTiles("Esri.WorldPhysical", group="Physical") %>%
-        leaflet::addProviderTiles("CartoDB.VoyagerNoLabels", group="Voyager") %>%
-        # leaflet::addProviderTiles("Stamen.TonerBackground", group="Stamen") %>%
-        # leaflet::addProviderTiles("CartoDB.PositronNoLabels", group="Positron") %>%
-        # leaflet::fitBounds(-5, 40, 15, 70) %>%
-        leaflet::addPolygons(
-          data=all_countries,
-          color = "grey",
-          weight = 1,
-          fill = FALSE
-        ) %>%
-        leaflet::addCircles(
+       leaflet::addCircles(
           data = df.topo() %>% dplyr::filter(.data$type=="city"),
           color = "darkgrey",
           opacity = 1
@@ -262,13 +300,13 @@ run_app <- function(filename="default.rds", ...) {
           color = "lightblue",
           opacity = 1,
           weight = 1
-        ) %>%
-        leaflet::addLayersControl(
-          baseGroups = c("Terrain", "Relief", "Physical", "Voyager"),
-          options = leaflet::layersControlOptions(collapsed = TRUE)
         )
+
+
+      map
     })
 
+    # add tiles
 
 
     # The proxy map to be modified
@@ -371,7 +409,11 @@ run_app <- function(filename="default.rds", ...) {
       # The formula is purely heuristic
       bb <-sf::st_bbox(df.sel.simpl)
       diagonal <- sqrt((bb[3]-bb[1])**2 + (bb[4]-bb[2])**2)
-      zoomfact <- 3 * exp(-10*(diagonal/180)) + 3
+      if (crs()$crsClass == "L.CRS.EPSG3857") {
+        zoomfact <- 3 * exp(-10*(diagonal/180)) + 3
+      } else {
+        zoomfact <- 1 * exp(-10*(diagonal/180)) + 1
+      }
 
       # Sometimes the tiles and polygons are not aligned after a leaflet::flyto,
       # in particular if the panning distance is small.
