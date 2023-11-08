@@ -39,7 +39,7 @@ load_naturalearth <- function() {
 
   # regions (Not provinces!)
   regions <- ne_download(type="geography_regions_polys", category="physical", returnclass="sf", scale="large") %>%
-    filter(REGION=="Europe") %>%
+    # filter(REGION=="Europe") %>%
     select(NAME_NL, geometry) %>%
     rename(name_nl=NAME_NL) %>%
     mutate(type="region")
