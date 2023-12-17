@@ -1,4 +1,4 @@
-# create "Earth" dataset
+# create "Africa" dataset
 library(rnaturalearth)
 library(dplyr)
 library(sf)  # important to have such that list are returned as polygons or multilinestrings
@@ -9,7 +9,7 @@ source(file.path("data-raw", "dataset_utils.R"))
 df.input <- read.csv(
   file.path(
     system.file("extdata", package="topografie"),
-    "earth.csv"
+    "africa.csv"
   )
 )
 
@@ -42,44 +42,13 @@ if (length(namen) > 0) {
   )
 }
 
-# TODO: Noordelijke IJszee centreert op een gekke plek
-# TODO: Stille oceaan op twee plekken
-
-# Europa heeft geen Engeland (en andere eilanden)
-namen <- c("Europa", "Noorwegen", "Nova Zembla", "IJsland", "Ierland", "Verenigd Koninkrijk", "Spanje", "Italië", "Frankrijk")
-df <- bind_rows(
-  df %>% filter(!(naam %in% namen)),
-  df %>%
-    filter(naam %in% namen) %>%
-    mutate(naam = "Europa", type="region")
-)
-
-# continent Australie bevat geen Nieuw Zeeland
-df <- bind_rows(
-  df %>% filter(!(naam %in% c("Australië", "Nieuw-Guinea", "Nieuw-Zeeland"))),
-  df %>%
-    filter(naam %in% c("Australië", "Nieuw-Guinea", "Nieuw-Zeeland")) %>%
-    mutate(naam = "Oceanië", type="region")
-)
-
-# Indonesie mist in Azie
-namen <- c("Azië", "Indonesië", "Filipijnen", "Maleisië")
-df <- bind_rows(
-  df %>% filter(!(naam %in% namen)),
-  df %>%
-    filter(naam %in% namen) %>%
-    mutate(naam = "Azië", type="region")
-)
-
-# Bovenloop Amazone toevoegen -> Ucayali toegevoegd
-# Bovenloop jangtze -> Jinsha toegevoegd
-# mississippi langer - op kaart staat missouri erbij - Missouri toegevoegd
 # Bovenloop nijl toevoegen - Witte Nijl toegevoegd
 # Nijldelta toevoegen - is er niet
 # vierkant mist in atlantische oceaan -> sargossa zee toegevoegd
 
 # voeg geometriëen samen
 df <- df %>%
+  st_make_valid() %>%
   group_by(naam, type) %>%
   summarize(geometry=st_union(geometry))
 
@@ -88,7 +57,7 @@ saveRDS(
   df,
   file.path(
     system.file("dashboard", "data", package="topografie"),
-    "earth.rds"
+    "africa.rds"
   )
 )
 
