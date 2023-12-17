@@ -1,3 +1,7 @@
+# topografie 0.4.0
+
+* Added an Africa dataset
+
 # topografie 0.3.0
 
 * Allow different geographic projections
