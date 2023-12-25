@@ -1,3 +1,7 @@
+# topografie 0.5.0
+
+* Added dataset with sovereignties (sovereign states)
+
 # topografie 0.4.0
 
 * Added an Africa dataset

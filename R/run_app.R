@@ -397,6 +397,9 @@ run_app <- function(filename="default.rds", ...) {
       # 1. Flying to the appropriate center
       # 2. Calculating an appropriate bounding box
       df.sel.simpl <- sf::st_simplify(df.sel, dTolerance = 10000)
+      if (sf::st_is_empty(df.sel.simpl)) {
+        df.sel.simpl <- sf::st_simplify(df.sel, dTolerance = 10)
+      }
 
       # fly to appropriate point
       # some polygons are invalid, therefore the when an error is encountered
