@@ -6,9 +6,8 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-Dit R-pakket bevat een app die je de topografie van Europa laat oefenen.
-De app is eveneens gepubliceerd op
-<https://reidhin.shinyapps.io/topografie/>
+Dit R-pakket bevat een app die je de topografie laat oefenen. De app is
+eveneens gepubliceerd op <https://reidhin.shinyapps.io/topografie/>
 
 De app maakt gebruik van de topografiën die op
 [nominatim](https://nominatim.org/) en
@@ -59,6 +58,22 @@ folder `inst/dashboard/data` geplaatst. Hierin staat ook een
 van de beschikbare bestanden te presenteren. Indien je een nieuwe
 dataset wil toevoegen kun je, nadat je de code hebt gecloned, in deze
 folders nieuwe scripts aanmaken.
+
+Zoals hierboven vermeld worden externe bronnen gebruikt voor het bepalen
+van lands- en gebiedsgrenzen. In sommige gevallen kunnen de grenzen
+betwist zijn, bijvoorbeeld vanwege (inter)nationale conflicten. Daarom
+kunnen er afwijkende grenzen voorkomen in de dataset.
+
+In sommige gevallen kunnen er ook verschillende interpretaties zijn van
+een geografisch gebied. Het gebied ‘Scandinavië’ kent bijvoorbeeld
+verschillende
+[definities](https://nl.wikipedia.org/wiki/Scandinavi%C3%AB): (1)
+geografisch met enkel Noorwegen en Zweden, (2) politiek met Denemarken,
+Noorwegen en Zweden, (3) als ‘Noordse’ landen waarbij ook IJsland en
+Finland horen.
+
+In deze gevallen wordt gekozen voor een gangbare definitie die aansluit
+bij de schoolopdracht.
 
 ## Project organisatie
 

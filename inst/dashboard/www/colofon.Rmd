@@ -1,4 +1,10 @@
 Deze Shiny App is gemaakt door Hans Weda in opdracht van zijn kinderen. 
 De broncode is beschikbaar op [Github](https://github.com/reidhin/topografie).
 
+De grenzen en posities zijn afkomstig uit [nominatim](https://nominatim.org/) 
+en [naturalearthdata](https://www.naturalearthdata.com/). In sommige gevallen kan
+er sprake zijn van betwiste grenzen of meerdere definities van een gebied. 
+'Scandinavië' kent bijvoorbeeld verschillende [definities](https://nl.wikipedia.org/wiki/Scandinavi%C3%AB).
+In deze gevallen wordt vanuit de bronnen zo goed mogelijk gekozen voor een gangbare definitie die aansluit bij de schoolopdracht.
+
 Created by Hans Weda &copy;
