@@ -117,7 +117,7 @@ run_app <- function(filename="default.rds", ...) {
       selected(sample(unique(df.topo()$naam), 1))
 
       # For debugging purposes:
-      #selected("Atlantische Oceaan")
+      #selected("Zeeland")
       #selected("Noordelijke IJszee")
 
       # update answer options
@@ -366,8 +366,8 @@ run_app <- function(filename="default.rds", ...) {
           )
       }
 
-      # area, region, sea
-      if (any(df.sel$type %in% c("area", "region", "sea"))) {
+      # area, region, sea, province
+      if (any(df.sel$type %in% c("area", "region", "sea", "province"))) {
         leaflet::leafletProxy(
           "map_euro",
           data = df.sel %>% dplyr::filter(.data$sf_type=="POINT")

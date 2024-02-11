@@ -8,11 +8,11 @@ Vlieland,region,Vlieland island
 Dollard,sea,
 Waddenzee,sea,Waddenzee Fryslan
 Eemskanaal,river,
-Groningen (prov.),region,R47826
-Eems,river,
+Groningen (prov.),province,Groningen
+Eems,river,Eems river
 Groningen (stad),city,Groningen
 Leeuwarden,city,R162081
-Fryslân (Friesland),region,
+Fryslân (Friesland),province,Fryslân
 Winschoten,city,
 Veendam,city,
 Drachten,city,
@@ -25,7 +25,7 @@ Assen,city,
 Stadskanaal,city,
 Heerenveen,city,R1414727
 Den Helder,city,R297066
-Drenthe,region,
+Drenthe,province,
 Noordhollands Kanaal,river,
 Emmen,city,
 IJsselmeer,sea,
@@ -33,16 +33,16 @@ Hoogeveen,city,
 Emmeloord,city,
 Enkhuizen,city,R296469
 Meppel,city,R414157
-Noord-Holland,region,
+Noord-Holland,province,
 Hoorn,city,
 Alkmaar,city,R337394
 Kampen,city,
-Overijssel,region,
+Overijssel,province,
 Markermeer,sea,
 Zwolle,city,
 Purmerend,city,
 Lelystad,city,R409806
-Flevoland,region,
+Flevoland,province,
 Noordzeekanaal,river,
 Zaandam,city,
 Haarlem,city,
@@ -85,9 +85,9 @@ Alpen a.d. Rijn,city,Alphen aan de Rijn
 Utrecht (stad),city,R419203
 Zeist,city,
 Den Haag,city,
-Utrecht (prov.),region,R47667
+Utrecht (prov.),province,Utrecht
 Zoetermeer,city,
-Gelderland,region,
+Gelderland,province,
 Ede,city,R334640
 Nieuwegein,city,
 Veenendaal,city,
@@ -147,10 +147,10 @@ Schelde-Rijnkanaal,river,R1410218
 Schelde-Rijnkanaal,river,R1410233
 Schelde-Rijnkanaal,river,R1408223
 Tilburg,city,R1411514
-Noord-Brabant,region,
+Noord-Brabant,province,
 Roosendaal,city,
 Goes,city,
-Zeeland,region,
+Zeeland,province,
 Bergen op Zoom,city,
 Middelburg,city,Middelburg nederland
 Helmond,city,
@@ -160,7 +160,7 @@ Westerschelde,sea,R9745220
 Venlo,city,
 Terneuzen,city,
 Zeeuws-Vlaanderen,region,
-Limburg,region,
+Limburg,province,
 Weert,city,R1414454
 Roermond,city,
 Maas,river,
@@ -169,4 +169,4 @@ Heerlen,city,
 Kerkrade,city,
 Maastricht,city,
 Vaalserberg,city,
-Zuid-Holland,region,
+Zuid-Holland,province,

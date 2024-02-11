@@ -17,7 +17,16 @@ df.input <- read.csv(
 df.input <- df.input %>%
   mutate(zoekterm=ifelse(zoekterm=="", naam, zoekterm))
 
-df.database <- load_naturalearth()
+## Add provinces
+df.provinces <- readRDS(
+  file.path(
+    system.file("dashboard", "data", package="topografie"),
+    "all_provinces.rds"
+  )
+)
+
+# load database
+df.database <- bind_rows(load_naturalearth(), df.provinces)
 
 ## Filter only necessary items
 df <- merge(
@@ -31,6 +40,7 @@ cat("Niet gevonden:")
 cat(setdiff(df.input$naam, df$naam))
 
 # Search in Nominatim
+# check https://nominatim.openstreetmap.org/ui/search.html
 namen <- setdiff(df.input$naam, df$naam)
 if (length(namen) > 0) {
   df.nominatim <- wrapper_nominatim(
