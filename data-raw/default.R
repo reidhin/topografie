@@ -72,3 +72,21 @@ saveRDS(
   )
 )
 
+
+# provincies - from PDOK
+url <- paste0('https://service.pdok.nl/cbs/gebiedsindelingen/2024/wfs/v1_0?')
+options <- paste('request=GetFeature', 'service=WFS', 'version=2.0.0', 'outputFormat=json', 'srsName=epsg:4326', sep = '&')
+provinces <- sf::st_read(paste0(url, options, sprintf('&typeName=provincie_gegeneraliseerd')))
+
+provinces %>%
+  rename(name_nl=statnaam) %>%
+  select(name_nl, geometry) %>%
+  mutate(type="country")
+
+saveRDS(
+  provinces,
+  file.path(
+    system.file("dashboard", "data", package="topografie"),
+    "all_provinces.rds"
+  )
+)
