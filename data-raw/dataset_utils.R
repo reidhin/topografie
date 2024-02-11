@@ -67,21 +67,44 @@ load_naturalearth <- function() {
 # function to query nominatim api
 get_from_nominatim <- function(query, polygon, resolution, language) {
 
-  # url to use
-  osm.base.url <- "http://nominatim.openstreetmap.org/search"
+  if (grepl("[N|W|R]\\d+", query)) {
+    # lookup an id
 
-  # Formulate query
-  request <- GET(
-    url=osm.base.url,
-    query = list(
-      q=query,
-      format="geojson",
-      polygon_geojson=polygon,
-      polygon_threshold=resolution,
-      `accept-language`=language,
-      limit=1
+    # url to use
+    osm.base.url <- "http://nominatim.openstreetmap.org/lookup"
+
+    # Formulate query
+    request <- GET(
+      url=osm.base.url,
+      query = list(
+        osm_ids=query,
+        format="geojson",
+        polygon_geojson=polygon,
+        polygon_threshold=resolution,
+        `accept-language`=language,
+        limit=1
+      )
     )
-  )
+  } else {
+    # query nominatim
+
+    # url to use
+    osm.base.url <- "http://nominatim.openstreetmap.org/search"
+
+    # Formulate query
+    request <- GET(
+      url=osm.base.url,
+      query = list(
+        q=query,
+        format="geojson",
+        polygon_geojson=polygon,
+        polygon_threshold=resolution,
+        `accept-language`=language,
+        limit=1
+      )
+    )
+  }
+
   response <- content(request, as="text", encoding="UTF-8")
   print(sprintf("query: %s, status: %s", query, request$status_code))
   out <- geojsonsf::geojson_sf(response)
@@ -91,9 +114,8 @@ get_from_nominatim <- function(query, polygon, resolution, language) {
 
 
 # function to process nominatim
-wrapper_nominatim <- function(df.in) {
+wrapper_nominatim <- function(df.in, resolution=0.01) {
   # parameters
-  resolution <- 0.01
   language <- "nl"
 
   # check if the input is a city
@@ -112,15 +134,12 @@ wrapper_nominatim <- function(df.in) {
     )
     temp$naam <- df.in$naam[i]
     temp$type <- df.in$type[i]
-    out <- rbind(out, temp %>% select(-contains("icon")))
+    # select only necessary columns
+    out <- rbind(out, temp %>% select(type, naam, geometry))
 
     # a maximum of one request per second is allowed
     Sys.sleep(1)
   }
-
-  # select only necessary columns
-  out <- out %>%
-    select(type, naam, geometry)
 
   return(out)
 }
