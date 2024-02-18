@@ -5,28 +5,71 @@ library(sf)  # important to have such that list are returned as polygons or mult
 source(file.path("data-raw", "dataset_utils.R"))
 
 
-df.database <- load_naturalearth()
+## read input
+df.input <- read.csv(
+  file.path(
+    system.file("extdata", package="topografie"),
+    "nederland.csv"
+  )
+)
 
-# Few enries are not valid
-# Egypte, Zuidelijke Oceaan, Rosszee
-valid.idx <- st_is_valid(df.database)
+# modify some input
+df.input <- df.input %>%
+  mutate(zoekterm=ifelse(zoekterm=="", naam, zoekterm))
 
-# vind Nederland
-nl <- df.database %>% filter(name_nl=="Nederland" & type=="country")
+## Add provinces
+df.provinces <- readRDS(
+  file.path(
+    system.file("dashboard", "data", package="topografie"),
+    "all_provinces.rds"
+  )
+)
 
-# find the overlap
-idx <- st_intersects(df.database[valid.idx, ], nl, sparse=FALSE)
+# load database
+df.database <- bind_rows(load_naturalearth(), df.provinces)
 
-df.nl <- df.database[valid.idx, ][idx, ]
-df.nl <- df.nl %>%
-  mutate(naam=name_nl)
+## Filter only necessary items
+df <- merge(
+  df.database,
+  df.input,
+  by.x = c("type", "name_nl"),
+  by.y = c("type", "zoekterm")
+)
+
+cat("Niet gevonden:")
+cat(setdiff(df.input$naam, df$naam))
+
+# Search in Nominatim
+# check https://nominatim.openstreetmap.org/ui/search.html
+namen <- setdiff(df.input$naam, df$naam)
+if (length(namen) > 0) {
+  df.nominatim <- wrapper_nominatim(
+    df.input %>% filter(naam %in% namen),
+    resolution=0.001
+  )
+
+  # add to output
+  df <- bind_rows(
+    df %>% filter(!(naam %in% namen)),
+    df.nominatim
+  )
+}
+
+# voeg geometriëen samen
+df <- df %>%
+  st_make_valid() %>%
+  group_by(naam, type) %>%
+  summarize(geometry=st_union(geometry))
 
 # save as rds
 saveRDS(
-  list(df=df.nl, viewbox=c(5, 50, 10, 55), zoom=6),
+  df,
   file.path(
     system.file("dashboard", "data", package="topografie"),
     "netherlands.rds"
   )
 )
+
+devtools::load_all()
+run_app("netherlands.rds")
 

@@ -59,10 +59,19 @@ run_app <- function(filename="default.rds", ...) {
     scores <- reactiveValues(correct=0, wrong=0)
 
     # crs of the projection
-    crs <- reactiveVal(leaflet::leafletCRS())
+    crs <- reactiveVal(
+      if (filename %in% datasets$filename) datasets$crs[[which(datasets$filename == filename)]] else leaflet::leafletCRS()
+    )
 
     # The filename of the background
-    background.filename <- reactiveVal("all_european_countries.rds")
+    background.filename <- reactiveVal(
+      if (filename %in% datasets$filename) datasets$background[datasets$filename == filename] else "all_european_countries.rds"
+    )
+
+    # zoom-factor after flying to certain locations
+    zoom.factor <- reactiveVal(
+      if (filename %in% datasets$filename) datasets$zoom.factor[datasets$filename == filename] else 3
+    )
 
     # define all indices to go
     names_to_go <- reactiveVal(NULL)
@@ -81,6 +90,7 @@ run_app <- function(filename="default.rds", ...) {
           filename <- temp.filename
           crs(datasets$crs[[which(datasets$filename == filename)]])
           background.filename(datasets$background[datasets$filename == filename])
+          zoom.factor(datasets$zoom.factor[datasets$filename == filename])
         }
       }
 
@@ -105,9 +115,10 @@ run_app <- function(filename="default.rds", ...) {
 
       # define which one is selected
       selected(sample(unique(df.topo()$naam), 1))
+
       # For debugging purposes:
-      #selected("Nederland")
-      #selected("Atlantische Oceaan")
+      #selected("Schelde-Rijnkanaal")
+      #selected("Zeeland")
       #selected("Noordelijke IJszee")
 
       # update answer options
@@ -356,8 +367,8 @@ run_app <- function(filename="default.rds", ...) {
           )
       }
 
-      # area, region, sea
-      if (any(df.sel$type %in% c("area", "region", "sea"))) {
+      # area, region, sea, province
+      if (any(df.sel$type %in% c("area", "region", "sea", "province"))) {
         leaflet::leafletProxy(
           "map_euro",
           data = df.sel %>% dplyr::filter(.data$sf_type=="POINT")
@@ -413,11 +424,8 @@ run_app <- function(filename="default.rds", ...) {
       # The formula is purely heuristic
       bb <-sf::st_bbox(df.sel.simpl)
       diagonal <- sqrt((bb[3]-bb[1])**2 + (bb[4]-bb[2])**2)
-      if (crs()$crsClass == "L.CRS.EPSG3857") {
-        zoomfact <- 3 * exp(-10*(diagonal/180)) + 3
-      } else {
-        zoomfact <- 1 * exp(-10*(diagonal/180)) + 1
-      }
+      zoomfact <- zoom.factor() * exp(-10*(diagonal/180)) + zoom.factor()
+
 
       # Sometimes the tiles and polygons are not aligned after a leaflet::flyto,
       # in particular if the panning distance is small.

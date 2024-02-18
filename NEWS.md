@@ -1,3 +1,8 @@
+# topografie 0.6.0
+
+* Added a Dutch dataset
+* Repaired a bug on CRS-setting
+
 # topografie 0.5.0
 
 * Added dataset with sovereignties (sovereign states)
