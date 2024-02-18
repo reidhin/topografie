@@ -1,7 +1,7 @@
 Package: topografie
 Type: Package
 Title: This package makes it easy to study topography
-Version: 0.5.0
+Version: 0.6.0
 Author: Hans Weda
 Maintainer: Hans Weda <hansweda@gmail.com>
 Description: This package contains a shiny app that allows easy studying of topography.
