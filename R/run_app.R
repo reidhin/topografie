@@ -117,6 +117,7 @@ run_app <- function(filename="default.rds", ...) {
       selected(sample(unique(df.topo()$naam), 1))
 
       # For debugging purposes:
+      #selected("Schelde-Rijnkanaal")
       #selected("Zeeland")
       #selected("Noordelijke IJszee")
 
