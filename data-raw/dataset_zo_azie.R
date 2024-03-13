@@ -48,6 +48,9 @@ df <- df %>%
   group_by(naam, type) %>%
   summarize(geometry=st_union(geometry))
 
+# create pacific view
+df <- st_shift_longitude(df)
+
 # save as rds
 saveRDS(
   df,

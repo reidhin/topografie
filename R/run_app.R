@@ -117,7 +117,7 @@ run_app <- function(filename="default.rds", ...) {
       selected(sample(unique(df.topo()$naam), 1))
 
       # For debugging purposes:
-      #selected("Schelde-Rijnkanaal")
+      #selected("Grote Oceaan (Stille Oceaan)")
       #selected("Zeeland")
       #selected("Noordelijke IJszee")
 
@@ -419,6 +419,13 @@ run_app <- function(filename="default.rds", ...) {
         expr = sf::st_coordinates(sf::st_centroid(sf::st_union(df.sel.simpl$geometry))),
         error = function(e) as.vector(colMeans(sf::st_coordinates(sf::st_union(df.sel.simpl$geometry))))
       )
+
+      # check if a pacific view is needed
+      if (sf::st_bbox(df.topo())$xmax > 180) {
+        if (center.coordinates[1] < 0) {
+          center.coordinates[1] <- center.coordinates[1] + 360
+        }
+      }
 
       # Find size of geometry to determine appropriate zoom factor.
       # The formula is purely heuristic
