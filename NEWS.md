@@ -1,3 +1,7 @@
+# topografie 0.8.0
+
+* Added a NE-Asia dataset
+
 # topografie 0.7.0
 
 * Added a SE-Asia dataset (including Australia)
